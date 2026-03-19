@@ -36,3 +36,9 @@ coverage/
 *.tmp
 .temp/
 tmp/
+
+# Claude Code configuration
+.claude/
+
+# Documentation (internal)
+OPTIMIZATION_SUMMARY.md

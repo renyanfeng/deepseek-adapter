@@ -9,8 +9,10 @@ const MODEL_MAPPING = {
   // Claude 4.6 系列
   'claude-opus-4-6': 'deepseek-reasoner',
   'claude-opus-4-6-1m': 'deepseek-reasoner',
+  'claude-opus-4-6[1m]': 'deepseek-reasoner',
   'claude-sonnet-4-6': 'deepseek-chat',
   'claude-sonnet-4-6-1m': 'deepseek-chat',
+  'claude-sonnet-4-6[1m]': 'deepseek-chat',
   'claude-haiku-4-5': 'deepseek-chat',
 
   // Claude 4 系列
@@ -21,8 +23,12 @@ const MODEL_MAPPING = {
   // Claude 3.5 系列
   'claude-3-5-sonnet': 'deepseek-chat',
   'claude-3-5-haiku': 'deepseek-chat',
+  'claude-3-5-sonnet-20241022': 'deepseek-chat',
 
   // Claude 3 系列
+  'claude-3-opus-20240229': 'deepseek-reasoner',
+  'claude-3-sonnet-20240229': 'deepseek-chat',
+  'claude-3-haiku-20240307': 'deepseek-chat',
   'claude-3-opus': 'deepseek-reasoner',
   'claude-3-sonnet': 'deepseek-chat',
   'claude-3-haiku': 'deepseek-chat',

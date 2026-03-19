@@ -5,7 +5,7 @@
 
 import express from 'express';
 import chalk from 'chalk';
-import { claudeToOpenAI } from './converters/request.js';
+import { claudeToOpenAI, mapModelName } from './converters/request.js';
 import { openAIToClaude } from './converters/response.js';
 import { StreamConverter, formatSSE } from './converters/stream.js';
 
@@ -45,31 +45,9 @@ export async function startServer(config) {
 
   // 模型列表 - 返回所有支持的 Claude 模型别名
   app.get('/v1/models', (req, res) => {
-    // Claude 模型别名列表（映射到 DeepSeek）
-    const claudeModels = [
-      // Claude 4.6 系列
-      'claude-opus-4-6', 'claude-opus-4-6[1m]',
-      'claude-sonnet-4-6', 'claude-sonnet-4-6[1m]',
-      'claude-haiku-4-5',
-
-      // Claude 4 系列
-      'claude-opus-4',
-      'claude-sonnet-4',
-      'claude-haiku-4',
-
-      // Claude 3.5 系列
-      'claude-3-5-sonnet',
-      'claude-3-5-haiku',
-      'claude-3-5-sonnet-20241022',
-
-      // Claude 3 系列
-      'claude-3-opus-20240229',
-      'claude-3-sonnet-20240229',
-      'claude-3-haiku-20240307',
-      'claude-3-opus',
-      'claude-3-sonnet',
-      'claude-3-haiku',
-    ];
+    // 导入 MODEL_MAPPING
+    const { MODEL_MAPPING } = require('./converters/request.js');
+    const claudeModels = Object.keys(MODEL_MAPPING);
 
     // DeepSeek 原生模型
     const deepseekModels = [
@@ -79,7 +57,12 @@ export async function startServer(config) {
     ];
 
     const allModels = [
-      ...claudeModels.map(id => ({ id, object: 'model', owned_by: 'anthropic' })),
+      ...claudeModels.map(id => ({
+        id,
+        object: 'model',
+        owned_by: 'anthropic',
+        description: `Mapped to: ${MODEL_MAPPING[id]}`
+      })),
       ...deepseekModels.map(id => ({ id, object: 'model', owned_by: 'deepseek' })),
     ];
 
@@ -91,11 +74,19 @@ export async function startServer(config) {
     try {
       const claudeReq = req.body;
 
-      // 转换请求
-      const openaiReq = claudeToOpenAI(claudeReq);
-      openaiReq.model = model; // 使用配置的模型
+      // 使用 mapModelName 获取实际模型
+      const requestedModel = claudeReq.model || 'claude-opus-4-6';
+      const actualModel = mapModelName(requestedModel);
+
+      // 更新请求中的模型
+      const openaiReq = claudeToOpenAI({
+        ...claudeReq,
+        model: actualModel
+      });
 
       console.log(chalk.blue('  → Converting request...'));
+      console.log(chalk.gray(`    Requested: ${requestedModel}`));
+      console.log(chalk.gray(`    Using: ${actualModel}`));
 
       // 调用 DeepSeek API
       const response = await fetch(DEEPSEEK_API, {
@@ -124,11 +115,13 @@ export async function startServer(config) {
       if (claudeReq.stream) {
         // 流式响应
         console.log(chalk.green('  ← Streaming response...'));
-        await handleStreamResponse(response, res, model);
+        await handleStreamResponse(response, res, actualModel, requestedModel);
       } else {
         // 非流式响应
         const data = await response.json();
-        const claudeRes = openAIToClaude(data, model);
+        const claudeRes = openAIToClaude(data, actualModel);
+        // 保留原始请求的模型名
+        claudeRes.model = requestedModel;
         console.log(chalk.green('  ← Response sent'));
         res.json(claudeRes);
       }
@@ -159,12 +152,12 @@ export async function startServer(config) {
 /**
  * 处理流式响应
  */
-async function handleStreamResponse(deepseekResponse, res, model) {
+async function handleStreamResponse(deepseekResponse, res, actualModel, requestedModel) {
   res.setHeader('Content-Type', 'text/event-stream');
   res.setHeader('Cache-Control', 'no-cache');
   res.setHeader('Connection', 'keep-alive');
 
-  const converter = new StreamConverter(model);
+  const converter = new StreamConverter(actualModel);
   const reader = deepseekResponse.body.getReader();
   const decoder = new TextDecoder();
   let buffer = '';
@@ -187,6 +180,10 @@ async function handleStreamResponse(deepseekResponse, res, model) {
 
           try {
             const chunk = JSON.parse(data);
+            // 在消息开始时添加模型信息
+            if (chunk.type === 'message_start' && chunk.message) {
+              chunk.message.model = requestedModel;
+            }
             const events = converter.convertChunk(chunk);
 
             for (const event of events) {
