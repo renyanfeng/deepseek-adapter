@@ -1,6 +1,6 @@
 {
   "name": "deepseek-adapter",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Use DeepSeek models with Claude Code - An Anthropic-compatible API adapter",
   "type": "module",
   "main": "src/index.js",
