@@ -129,7 +129,7 @@ npx deepseek-adapter test
 | 选项 | 说明 | 默认值 |
 |------|------|--------|
 | `-k, --api-key <key>` | DeepSeek API Key | `DEEPSEEK_API_KEY` 环境变量 |
-| `-m, --model <model>` | 使用的模型 | `deepseek-chat` |
+| `-m, --model <model>` | 使用的模型 | `deepseek-reasoner` |
 | `-p, --port <port>` | 服务端口 | `3000` |
 | `-h, --host <host>` | 服务地址 | `localhost` |
 
@@ -139,18 +139,16 @@ npx deepseek-adapter test
 
 | 模型 | 说明 |
 |------|------|
-| `deepseek-chat` | 主力模型，推荐使用 |
-| `deepseek-reasoner` | 推理增强模型 |
+| `deepseek-reasoner` | 推理增强模型（默认） |
+| `deepseek-chat` | 主力对话模型 |
 
-### Claude 模型别名
+### Claude 模型映射
 
-以下 Claude 模型名称会被自动映射到对应的 DeepSeek 模型：
+**所有 Claude 模型统一映射到 DeepSeek Reasoner**
 
-| Claude 模型 | 映射到 |
-|------------|--------|
-| `claude-opus-4-6`、`claude-opus-4` | `deepseek-reasoner` |
-| `claude-sonnet-4-6`、`claude-sonnet-4` | `deepseek-chat` |
-| `claude-haiku-4-5`、`claude-haiku-4` | `deepseek-chat` |
+- 无需担心模型名称不匹配
+- 自动使用 DeepSeek 最强的推理模型
+- 支持任意 Claude 模型名称（如 `claude-opus-4-6[1m]`、`claude-sonnet-4-6` 等）
 
 ## 🔧 高级用法
 
@@ -163,7 +161,7 @@ await startServer({
   apiKey: 'your_api_key',
   port: 3000,
   host: 'localhost',
-  model: 'deepseek-chat'
+  model: 'deepseek-reasoner'
 });
 ```
 

@@ -5,7 +5,7 @@
 
 import express from 'express';
 import chalk from 'chalk';
-import { claudeToOpenAI, mapModelName } from './converters/request.js';
+import { claudeToOpenAI, mapModelName, MODEL_MAPPING } from './converters/request.js';
 import { openAIToClaude } from './converters/response.js';
 import { StreamConverter, formatSSE } from './converters/stream.js';
 
@@ -45,8 +45,7 @@ export async function startServer(config) {
 
   // 模型列表 - 返回所有支持的 Claude 模型别名
   app.get('/v1/models', (req, res) => {
-    // 导入 MODEL_MAPPING
-    const { MODEL_MAPPING } = require('./converters/request.js');
+    // 使用已导入的 MODEL_MAPPING
     const claudeModels = Object.keys(MODEL_MAPPING);
 
     // DeepSeek 原生模型
@@ -69,14 +68,41 @@ export async function startServer(config) {
     res.json({ data: allModels });
   });
 
+  // 调试端点 - 测试模型映射
+  app.get('/debug/model-mapping', (req, res) => {
+    const requestedModel = req.query.model || 'claude-opus-4-6[1m]';
+
+    console.log(`\n🔍 [DEBUG] Model mapping debug request for: ${requestedModel}`);
+
+    const result = mapModelName(requestedModel);
+
+    const response = {
+      requested_model: requestedModel,
+      mapped_model: result,
+      model_mapping: MODEL_MAPPING,
+      timestamp: new Date().toISOString()
+    };
+
+    console.log(`✅ [DEBUG] Mapping result:`, response);
+    res.json(response);
+  });
+
   // 主 API 端点 - Anthropic 兼容
   app.post('/v1/messages', async (req, res) => {
     try {
       const claudeReq = req.body;
+      console.log(chalk.blue('\n📨 [DEBUG] Received request:'));
+      console.log(chalk.blue(`  Method: POST /v1/messages`));
+      console.log(chalk.blue(`  Model requested: ${claudeReq.model || 'default'}`));
+      console.log(chalk.blue(`  Stream: ${claudeReq.stream || false}`));
 
       // 使用 mapModelName 获取实际模型
       const requestedModel = claudeReq.model || 'claude-opus-4-6';
       const actualModel = mapModelName(requestedModel);
+
+      console.log(chalk.yellow(`  [DEBUG] Model mapping:`));
+      console.log(chalk.yellow(`    Model '${requestedModel}' → '${actualModel}'`));
+      console.log(chalk.yellow(`    MODEL_MAPPING: ${JSON.stringify(MODEL_MAPPING, null, 2)}`));
 
       // 更新请求中的模型
       const openaiReq = claudeToOpenAI({
@@ -87,8 +113,16 @@ export async function startServer(config) {
       console.log(chalk.blue('  → Converting request...'));
       console.log(chalk.gray(`    Requested: ${requestedModel}`));
       console.log(chalk.gray(`    Using: ${actualModel}`));
+      console.log(chalk.blue(`  [DEBUG] OpenAI request body (partial):`));
+      console.log(chalk.gray(`    model: ${openaiReq.model}`));
+      console.log(chalk.gray(`    messages: ${openaiReq.messages.length} items`));
+      console.log(chalk.gray(`    max_tokens: ${openaiReq.max_tokens}`));
+      console.log(chalk.gray(`    temperature: ${openaiReq.temperature}`));
 
       // 调用 DeepSeek API
+      console.log(chalk.blue('  [DEBUG] Calling DeepSeek API...'));
+      const startTime = Date.now();
+
       const response = await fetch(DEEPSEEK_API, {
         method: 'POST',
         headers: {
@@ -98,10 +132,15 @@ export async function startServer(config) {
         body: JSON.stringify(openaiReq),
       });
 
+      const apiDuration = Date.now() - startTime;
+      console.log(chalk.blue(`  [DEBUG] API call completed in ${apiDuration}ms`));
+      console.log(chalk.blue(`  [DEBUG] API response status: ${response.status}`));
+
       if (!response.ok) {
         const errorText = await response.text();
         console.error(chalk.red(`  ✗ DeepSeek API error: ${response.status}`));
         console.error(chalk.red(`    ${errorText}`));
+        console.error(chalk.red(`  [DEBUG] Full error response:`, errorText));
         return res.status(response.status).json({
           type: 'error',
           error: {
@@ -118,16 +157,24 @@ export async function startServer(config) {
         await handleStreamResponse(response, res, actualModel, requestedModel);
       } else {
         // 非流式响应
+        console.log(chalk.blue('  [DEBUG] Processing non-stream response...'));
         const data = await response.json();
+        console.log(chalk.blue(`  [DEBUG] DeepSeek response data (partial):`));
+        console.log(chalk.gray(`    model: ${data.model}`));
+        console.log(chalk.gray(`    usage: ${JSON.stringify(data.usage)}`));
+        console.log(chalk.gray(`    choices: ${data.choices.length} items`));
+
         const claudeRes = openAIToClaude(data, actualModel);
         // 保留原始请求的模型名
         claudeRes.model = requestedModel;
         console.log(chalk.green('  ← Response sent'));
+        console.log(chalk.blue(`  [DEBUG] Final Claude response model: ${claudeRes.model}`));
         res.json(claudeRes);
       }
 
     } catch (error) {
       console.error(chalk.red(`  ✗ Error: ${error.message}`));
+      console.error(chalk.red(`  [DEBUG] Error stack:`, error.stack));
       res.status(500).json({
         type: 'error',
         error: {

@@ -26,11 +26,12 @@ export function openAIToClaude(openaiRes, model = 'deepseek-chat') {
   // 构建 content
   const content = [];
 
-  // 文本内容
-  if (choice.message?.content) {
+  // 文本内容（DeepSeek Reasoner 使用 reasoning_content）
+  const textContent = choice.message?.reasoning_content || choice.message?.content;
+  if (textContent) {
     content.push({
       type: 'text',
-      text: choice.message.content
+      text: textContent
     });
   }
 

@@ -4,71 +4,20 @@
 
 /**
  * Claude 模型名称 → DeepSeek 模型名称 映射
+ * 所有模型统一映射到 DeepSeek 最新的推理模型
  */
-const MODEL_MAPPING = {
-  // Claude 4.6 系列
-  'claude-opus-4-6': 'deepseek-reasoner',
-  'claude-opus-4-6-1m': 'deepseek-reasoner',
-  'claude-opus-4-6[1m]': 'deepseek-reasoner',
-  'claude-sonnet-4-6': 'deepseek-chat',
-  'claude-sonnet-4-6-1m': 'deepseek-chat',
-  'claude-sonnet-4-6[1m]': 'deepseek-chat',
-  'claude-haiku-4-5': 'deepseek-chat',
-
-  // Claude 4 系列
-  'claude-opus-4': 'deepseek-reasoner',
-  'claude-sonnet-4': 'deepseek-chat',
-  'claude-haiku-4': 'deepseek-chat',
-
-  // Claude 3.5 系列
-  'claude-3-5-sonnet': 'deepseek-chat',
-  'claude-3-5-haiku': 'deepseek-chat',
-  'claude-3-5-sonnet-20241022': 'deepseek-chat',
-
-  // Claude 3 系列
-  'claude-3-opus-20240229': 'deepseek-reasoner',
-  'claude-3-sonnet-20240229': 'deepseek-chat',
-  'claude-3-haiku-20240307': 'deepseek-chat',
-  'claude-3-opus': 'deepseek-reasoner',
-  'claude-3-sonnet': 'deepseek-chat',
-  'claude-3-haiku': 'deepseek-chat',
-
-  // 默认映射
-  'default': 'deepseek-chat'
+export const MODEL_MAPPING = {
+  'default': 'deepseek-reasoner'
 };
 
 /**
  * 获取映射后的模型名称
- * @param {string} claudeModel - Claude 模型名称
+ * @param {string} _claudeModel - Claude 模型名称（未使用，所有模型统一映射）
  * @returns {string} DeepSeek 模型名称
  */
-export function mapModelName(claudeModel) {
-  if (!claudeModel) return MODEL_MAPPING['default'];
-
-  // 移除可能的方括号后缀 (如 [1m])
-  const baseModel = claudeModel.replace(/\[.*?\]$/, '');
-
-  // 直接匹配
-  if (MODEL_MAPPING[baseModel]) {
-    return MODEL_MAPPING[baseModel];
-  }
-
-  // 模糊匹配（处理版本号差异）
-  for (const [key, value] of Object.entries(MODEL_MAPPING)) {
-    if (baseModel.startsWith(key) || key.startsWith(baseModel)) {
-      return value;
-    }
-  }
-
-  // 包含 opus → deepseek-reasoner
-  if (baseModel.includes('opus')) return 'deepseek-reasoner';
-  // 包含 sonnet → deepseek-chat
-  if (baseModel.includes('sonnet')) return 'deepseek-chat';
-  // 包含 haiku → deepseek-chat
-  if (baseModel.includes('haiku')) return 'deepseek-chat';
-
-  // 默认使用配置的模型或 deepseek-chat
-  return process.env.MODEL || MODEL_MAPPING['default'];
+export function mapModelName(_claudeModel) {
+  // 所有模型统一映射到 DeepSeek 推理模型
+  return process.env.MODEL || 'deepseek-reasoner';
 }
 
 /**
