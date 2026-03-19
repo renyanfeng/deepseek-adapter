@@ -25,7 +25,6 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const envPaths = [
   join(process.cwd(), '.env'),           // 当前工作目录
   join(__dirname, '..', '.env'),         // 项目目录
-  join(process.env.HOME || '~', '.deepseek-adapter', '.env'),  // 用户目录
 ];
 
 for (const envPath of envPaths) {
@@ -68,7 +67,6 @@ program
       console.error(chalk.red('Error: DEEPSEEK_API_KEY is required'));
       console.error(chalk.yellow('Set it via:'));
       console.error('  - Command line: --api-key YOUR_KEY');
-      console.error('  - Environment: export DEEPSEEK_API_KEY=YOUR_KEY');
       console.error('  - .env file: DEEPSEEK_API_KEY=YOUR_KEY');
       console.error('  - Config file: --config /path/to/.env');
       process.exit(1);

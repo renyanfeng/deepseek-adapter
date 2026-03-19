@@ -20,8 +20,9 @@ export function showConfig() {
   console.log(chalk.white('   方式一: 命令行参数'));
   console.log(chalk.green('   npx deepseek-adapter start -k YOUR_API_KEY'));
   console.log();
-  console.log(chalk.white('   方式二: 环境变量'));
-  console.log(chalk.green('   export DEEPSEEK_API_KEY=YOUR_API_KEY'));
+  console.log(chalk.white('   方式二: .env 文件'));
+  console.log(chalk.gray('   在项目根目录创建 .env 文件:'));
+  console.log(chalk.green('   DEEPSEEK_API_KEY=YOUR_API_KEY'));
   console.log(chalk.green('   npx deepseek-adapter start'));
   console.log();
   console.log(chalk.white('   方式三: .env 文件'));

@@ -38,7 +38,7 @@ npx deepseek-adapter start
 npx deepseek-adapter install
 
 # 设置 API Key
-export DEEPSEEK_API_KEY=your_api_key
+echo "DEEPSEEK_API_KEY=your_api_key" > .env
 
 # 启动代理
 npx deepseek-adapter start
@@ -64,12 +64,13 @@ npx deepseek-adapter start
 配置文件搜索路径（按优先级）：
 1. 当前工作目录的 `.env`
 2. 项目目录的 `.env`
-3. `~/.deepseek-adapter/.env`
 
-**方式二: 使用环境变量**
+**方式二: 使用 .env 配置文件**
+
+在项目目录创建 `.env` 文件：
 
 ```bash
-export DEEPSEEK_API_KEY=your_api_key
+echo "DEEPSEEK_API_KEY=your_api_key" > .env
 npx deepseek-adapter start
 ```
 
