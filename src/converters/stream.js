@@ -1,12 +1,21 @@
 /**
  * 流式响应转换器
- * OpenAI SSE → Claude SSE
+ *
+ * 将 DeepSeek (OpenAI) SSE 流式响应转换为 Claude API 兼容的 SSE 格式。
+ * 支持文本增量、工具调用、使用量统计等事件的转换。
  */
 
 /**
- * 流式响应状态管理
+ * 流式响应状态管理类
+ *
+ * 跟踪流式转换过程中的状态，包括消息 ID、内容索引、工具调用等。
  */
 export class StreamConverter {
+  /**
+   * 创建流式转换器实例
+   *
+   * @param {string} [model='deepseek-chat'] - 模型名称
+   */
   constructor(model = 'deepseek-chat') {
     this.model = model;
     this.messageId = `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -20,6 +29,8 @@ export class StreamConverter {
 
   /**
    * 生成消息开始事件
+   *
+   * @returns {Object} Claude message_start 事件
    */
   generateMessageStart() {
     return {
@@ -39,6 +50,10 @@ export class StreamConverter {
 
   /**
    * 生成内容块开始事件
+   *
+   * @param {string} blockType - 内容块类型 ('text' | 'tool_use')
+   * @param {number} index - 内容块索引
+   * @returns {Object} Claude content_block_start 事件
    */
   generateContentBlockStart(blockType, index) {
     if (blockType === 'text') {
@@ -58,6 +73,14 @@ export class StreamConverter {
 
   /**
    * 转换 OpenAI 流式数据块
+   *
+   * 将 OpenAI SSE 数据块转换为 Claude API 兼容的事件数组。
+   * 首次调用会生成 message_start 事件，后续处理文本增量和工具调用。
+   *
+   * @param {Object} chunk - OpenAI 流式数据块
+   * @param {Array} chunk.choices - 选择数组
+   * @param {Object} [chunk.usage] - 使用量统计
+   * @returns {Array<Object>} Claude SSE 事件数组
    */
   convertChunk(chunk) {
     const events = [];
@@ -173,7 +196,10 @@ export class StreamConverter {
   }
 
   /**
-   * 映射 stop 原因
+   * 映射 finish_reason 到 stop_reason
+   *
+   * @param {string} finishReason - OpenAI 完成原因
+   * @returns {string} Claude stop_reason
    */
   mapStopReason(finishReason) {
     if (this.currentToolCalls.size > 0) {
@@ -189,7 +215,15 @@ export class StreamConverter {
 }
 
 /**
- * 将事件格式化为 SSE 字符串
+ * 将事件格式化为 SSE (Server-Sent Events) 字符串
+ *
+ * @param {Object} event - Claude SSE 事件对象
+ * @param {string} event.type - 事件类型
+ * @returns {string} SSE 格式字符串 (格式: "event: {type}\ndata: {json}\n\n")
+ *
+ * @example
+ * formatSSE({ type: 'message_stop' });
+ * // => "event: message_stop\ndata: {\"type\":\"message_stop\"}\n\n"
  */
 export function formatSSE(event) {
   return `event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`;

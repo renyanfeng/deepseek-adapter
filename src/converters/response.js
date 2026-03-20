@@ -3,12 +3,31 @@
  */
 
 /**
- * 转换 OpenAI 响应到 Claude 格式
- * @param {Object} openaiRes - OpenAI API 响应
- * @param {string} model - 模型名称
- * @returns {Object} Claude 格式响应
+ * 转换 OpenAI API 响应格式到 Claude 格式
+ *
+ * 将 DeepSeek (OpenAI) API 的响应格式转换为 Anthropic Claude 兼容格式。
+ * 处理文本内容、工具调用、使用量统计等。
+ *
+ * @param {Object} openaiRes - OpenAI API 响应体
+ * @param {string} [model='deepseek-chat'] - 模型名称
+ * @returns {Object} Claude 格式响应体
+ * @throws {TypeError} 如果 openaiRes 不是有效对象
+ *
+ * @example
+ * openAIToClaude({
+ *   id: 'chatcmpl-123',
+ *   choices: [{
+ *     message: { role: 'assistant', content: 'Hello!' },
+ *     finish_reason: 'stop'
+ *   }],
+ *   usage: { prompt_tokens: 10, completion_tokens: 5 }
+ * }, 'deepseek-chat');
  */
 export function openAIToClaude(openaiRes, model = 'deepseek-chat') {
+  if (!openaiRes || typeof openaiRes !== 'object') {
+    throw new TypeError('openaiRes must be an object');
+  }
+
   const choice = openaiRes.choices?.[0];
 
   if (!choice) {
@@ -66,7 +85,11 @@ export function openAIToClaude(openaiRes, model = 'deepseek-chat') {
 }
 
 /**
- * 映射 stop 原因
+ * 映射 OpenAI finish_reason 到 Claude stop_reason
+ *
+ * @param {string} finishReason - OpenAI 完成原因 ('stop' | 'length' | 'tool_calls')
+ * @param {Array} [toolCalls] - 工具调用数组（如果有，返回 'tool_use'）
+ * @returns {string} Claude stop_reason ('end_turn' | 'max_tokens' | 'tool_use')
  */
 function mapStopReason(finishReason, toolCalls) {
   if (toolCalls && toolCalls.length > 0) {
@@ -86,7 +109,12 @@ function mapStopReason(finishReason, toolCalls) {
 }
 
 /**
- * 解析 tool input
+ * 解析工具调用参数
+ *
+ * 尝试将 JSON 字符串解析为对象，如果解析失败则返回原始字符串。
+ *
+ * @param {string} args - JSON 字符串格式的参数
+ * @returns {Object} 解析后的参数对象
  */
 function parseToolInput(args) {
   if (!args) return {};
@@ -99,7 +127,9 @@ function parseToolInput(args) {
 }
 
 /**
- * 生成消息 ID
+ * 生成唯一的消息 ID
+ *
+ * @returns {string} 格式为 `msg_{timestamp}_{random}` 的唯一 ID
  */
 function generateId() {
   return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;

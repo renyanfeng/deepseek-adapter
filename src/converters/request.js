@@ -33,8 +33,22 @@ export const MODEL_MAPPING = {
 
 /**
  * 获取映射后的模型名称
- * @param {string} claudeModel - Claude 模型名称
- * @returns {string} DeepSeek 模型名称
+ *
+ * 如果设置了环境变量 MODEL，则优先使用环境变量；
+ * 否则根据映射表将 Claude 模型名映射到对应的 DeepSeek 模型。
+ *
+ * @param {string} claudeModel - Claude 模型名称 (如: 'claude-opus-4-6')
+ * @returns {string} DeepSeek 模型名称 ('deepseek-chat' 或 'deepseek-reasoner')
+ *
+ * @example
+ * // 使用环境变量 MODEL
+ * process.env.MODEL = 'deepseek-chat';
+ * mapModelName('claude-opus-4-6'); // 'deepseek-chat'
+ *
+ * @example
+ * // 使用映射表
+ * mapModelName('claude-opus-4-6'); // 'deepseek-reasoner'
+ * mapModelName('claude-sonnet-4-6'); // 'deepseek-chat'
  */
 export function mapModelName(claudeModel) {
   // 如果设置了环境变量 MODEL，优先使用
@@ -47,11 +61,36 @@ export function mapModelName(claudeModel) {
 }
 
 /**
- * 转换 Claude 消息格式到 OpenAI 格式
+ * 转换 Claude API 请求格式到 OpenAI 格式
+ *
+ * 将 Anthropic Claude API 的请求格式转换为兼容 DeepSeek (OpenAI) 的格式。
+ * 处理消息格式、工具调用、模型参数等的转换。
+ *
  * @param {Object} claudeReq - Claude API 请求体
+ * @param {string} claudeReq.model - Claude 模型名称
+ * @param {number} [claudeReq.max_tokens] - 最大生成 token 数
+ * @param {Array} [claudeReq.messages] - 消息数组
+ * @param {string|Array} [claudeReq.system] - 系统提示词
+ * @param {number} [claudeReq.temperature] - 温度参数
+ * @param {boolean} [claudeReq.stream] - 是否流式响应
+ * @param {Array} [claudeReq.tools] - 工具定义数组
+ * @param {Object} [claudeReq.tool_choice] - 工具选择策略
  * @returns {Object} OpenAI 格式请求体
+ * @throws {TypeError} 如果 claudeReq 不是有效对象
+ *
+ * @example
+ * claudeToOpenAI({
+ *   model: 'claude-opus-4-6',
+ *   max_tokens: 4096,
+ *   messages: [{ role: 'user', content: 'Hello' }]
+ * });
+ * // => { model: 'deepseek-reasoner', messages: [...], max_tokens: 4096, stream: false }
  */
 export function claudeToOpenAI(claudeReq) {
+  if (!claudeReq || typeof claudeReq !== 'object') {
+    throw new TypeError('claudeReq must be an object');
+  }
+
   const deepseekModel = mapModelName(claudeReq.model);
   const isReasoner = deepseekModel === 'deepseek-reasoner';
 
@@ -109,8 +148,18 @@ export function claudeToOpenAI(claudeReq) {
 
 /**
  * 转换单条消息
+ *
+ * 处理各种消息格式：简单文本、数组格式内容、工具调用、工具结果等。
+ * 对于 DeepSeek Reasoner 模型，assistant 消息需要包含 reasoning_content 字段。
+ *
  * @param {Object} msg - 消息对象
- * @param {boolean} isReasoner - 是否使用推理模型
+ * @param {string} msg.role - 消息角色 ('user' | 'assistant' | 'system' | 'tool')
+ * @param {string|Array} msg.content - 消息内容（字符串或内容块数组）
+ * @param {Array} [msg.tool_calls] - 工具调用数组
+ * @param {string} [msg.tool_call_id] - 工具调用 ID
+ * @param {string} [msg.reasoning_content] - 推理内容（用于 Reasoner 模型）
+ * @param {boolean} [isReasoner=false] - 是否使用推理模型
+ * @returns {Object|Object[]} OpenAI 格式消息（可能返回数组，用于多个 tool result）
  */
 function convertMessage(msg, isReasoner = false) {
   const role = msg.role;
@@ -226,7 +275,13 @@ function convertMessage(msg, isReasoner = false) {
 }
 
 /**
- * 转换 Tools 格式
+ * 转换 Claude Tools 格式到 OpenAI 格式
+ *
+ * @param {Array<Object>} claudeTools - Claude 工具定义数组
+ * @param {string} claudeTools[].name - 工具名称
+ * @param {string} [claudeTools[].description] - 工具描述
+ * @param {Object} claudeTools[].input_schema - 输入参数 JSON Schema
+ * @returns {Array<Object>} OpenAI 格式工具定义数组
  */
 function convertTools(claudeTools) {
   return claudeTools.map(tool => ({
@@ -240,7 +295,12 @@ function convertTools(claudeTools) {
 }
 
 /**
- * 转换 tool_choice
+ * 转换 Claude tool_choice 到 OpenAI 格式
+ *
+ * @param {Object} choice - Claude tool_choice 配置
+ * @param {string} choice.type - 选择类型 ('auto' | 'any' | 'tool')
+ * @param {string} [choice.name] - 当 type='tool' 时指定的工具名称
+ * @returns {string|Object} OpenAI 格式 tool_choice ('auto' | 'required' | { type, function })
  */
 function convertToolChoice(choice) {
   if (choice.type === 'auto') return 'auto';

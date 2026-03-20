@@ -14,7 +14,7 @@ import chalk from 'chalk';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { existsSync } from 'fs';
+import { existsSync, readFileSync } from 'fs';
 import { startServer } from '../src/server.js';
 import { showConfig } from '../src/commands/config.js';
 import { testConnection } from '../src/commands/test.js';
@@ -22,6 +22,9 @@ import { install, uninstall } from '../src/commands/install.js';
 
 // 加载 .env 文件（从当前工作目录和项目目录）
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// 读取 package.json 获取版本号
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
 const envPaths = [
   join(process.cwd(), '.env'),           // 当前工作目录
   join(__dirname, '..', '.env'),         // 项目目录
@@ -39,7 +42,7 @@ const program = new Command();
 program
   .name('deepseek-adapter')
   .description('Use DeepSeek models with Claude Code - An Anthropic-compatible API adapter')
-  .version('1.0.0');
+  .version(packageJson.version);
 
 // start 命令
 program

@@ -13,8 +13,36 @@ const DEEPSEEK_API = 'https://api.deepseek.com/chat/completions';
 
 /**
  * 启动代理服务器
+ *
+ * 创建一个 Express 服务器，提供 Anthropic Claude API 兼容的接口，
+ * 自动将请求转发到 DeepSeek API 并转换响应格式。
+ *
+ * @param {Object} config - 服务器配置
+ * @param {number} [config.port=3000] - 服务器端口
+ * @param {string} [config.host='localhost'] - 服务器主机地址
+ * @param {string} config.apiKey - DeepSeek API Key (必需)
+ * @param {string} [config.model='deepseek-chat'] - 默认模型名称
+ * @returns {Promise<void>} 服务器启动完成后 resolve
+ * @throws {TypeError} 如果 config 不是有效对象或缺少 apiKey
+ *
+ * @example
+ * import { startServer } from 'deepseek-adapter/server';
+ *
+ * await startServer({
+ *   apiKey: 'sk-xxx',
+ *   port: 3000,
+ *   host: 'localhost',
+ *   model: 'deepseek-chat'
+ * });
  */
 export async function startServer(config) {
+  if (!config || typeof config !== 'object') {
+    throw new TypeError('config must be an object');
+  }
+  if (!config.apiKey) {
+    throw new TypeError('config.apiKey is required');
+  }
+
   const { port, host, apiKey, model } = config;
 
   const app = express();
@@ -179,7 +207,7 @@ export async function startServer(config) {
   // 启动服务器
   app.listen(port, host, () => {
     console.log(chalk.green.bold('\n✓ Server started successfully!\n'));
-    console.log(chalk.white('  Endpoint: ') + chalk.cyan(`http://${host}:${port}/v1`));
+    console.log(chalk.white('  Endpoint: ') + chalk.cyan(`http://${host}:${port}`));
     console.log(chalk.white('  Health:   ') + chalk.cyan(`http://${host}:${port}/health`));
     console.log(chalk.white('  Debug:    ') + chalk.cyan(`http://${host}:${port}/debug/model-mapping`));
     console.log();
@@ -195,6 +223,14 @@ export async function startServer(config) {
 
 /**
  * 处理流式响应
+ *
+ * 将 DeepSeek API 的 SSE 流式响应转换为 Claude API 格式并转发给客户端。
+ *
+ * @param {Response} deepseekResponse - DeepSeek API 的响应对象
+ * @param {Object} res - Express 响应对象
+ * @param {string} actualModel - 实际使用的 DeepSeek 模型名称
+ * @param {string} requestedModel - 用户请求的 Claude 模型名称
+ * @returns {Promise<void>}
  */
 async function handleStreamResponse(deepseekResponse, res, actualModel, requestedModel) {
   res.setHeader('Content-Type', 'text/event-stream');
