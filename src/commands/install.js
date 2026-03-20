@@ -19,7 +19,7 @@ export async function install(options) {
 
   const port = options.port || '3000';
   const host = options.host || 'localhost';
-  const baseUrl = `http://${host}:${port}/v1`;
+  const baseUrl = `http://${host}:${port}`;
 
   // 读取现有配置
   let settings = {};

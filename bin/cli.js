@@ -79,7 +79,7 @@ program
     console.log(chalk.white(`  Host:   `) + chalk.green(options.host));
     console.log(chalk.gray('━'.repeat(40)));
     console.log(chalk.yellow('\nClaude Code 配置:'));
-    console.log(chalk.white('  ANTHROPIC_BASE_URL: ') + chalk.cyan(`http://${options.host}:${options.port}/v1`));
+    console.log(chalk.white('  ANTHROPIC_BASE_URL: ') + chalk.cyan(`http://${options.host}:${options.port}`));
     console.log(chalk.white('  ANTHROPIC_AUTH_TOKEN: ') + chalk.cyan('任意值（如: deepseek-key）'));
     console.log();
 

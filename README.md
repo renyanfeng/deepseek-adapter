@@ -93,7 +93,7 @@ npx deepseek-adapter start -c /path/to/.env
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "deepseek-key",
-    "ANTHROPIC_BASE_URL": "http://localhost:3000/v1"
+    "ANTHROPIC_BASE_URL": "http://localhost:3000"
   }
 }
 ```

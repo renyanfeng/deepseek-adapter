@@ -36,7 +36,7 @@ export function showConfig() {
   console.log(chalk.cyan('   {'));
   console.log(chalk.cyan('     "env": {'));
   console.log(chalk.cyan('       "ANTHROPIC_AUTH_TOKEN": "deepseek-key",'));
-  console.log(chalk.cyan('       "ANTHROPIC_BASE_URL": "http://localhost:3000/v1"'));
+  console.log(chalk.cyan('       "ANTHROPIC_BASE_URL": "http://localhost:3000"'));
   console.log(chalk.cyan('     }'));
   console.log(chalk.cyan('   }'));
   console.log();

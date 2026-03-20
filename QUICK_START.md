@@ -32,7 +32,7 @@ npx deepseek-adapter start -k your_api_key
 {
   "env": {
     "ANTHROPIC_AUTH_TOKEN": "deepseek-key",
-    "ANTHROPIC_BASE_URL": "http://localhost:3000/v1"
+    "ANTHROPIC_BASE_URL": "http://localhost:3000"
   }
 }
 ```

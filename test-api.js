@@ -6,7 +6,7 @@
 
 import fetch from 'node-fetch';
 
-const BASE_URL = 'http://localhost:3000/v1';
+const BASE_URL = 'http://localhost:3000';
 const API_KEY = 'your-deepseek-api-key-here'; // 需要替换为实际的 DeepSeek API Key
 
 // 测试数据
