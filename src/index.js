@@ -9,4 +9,4 @@
  */
 
 export { startServer } from './server.js';
-export { claudeToOpenAI, openAIToClaude, StreamConverter, formatSSE } from './converters/index.js';
+export { claudeToOpenAI, openAIToClaude, MODEL_MAPPING, mapModelName, StreamConverter, formatSSE } from './converters/index.js';

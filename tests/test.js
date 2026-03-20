@@ -16,7 +16,7 @@ const testCases = [
   { input: 'claude-sonnet-4-6', expected: 'deepseek-chat' },
   { input: 'claude-haiku-4-5', expected: 'deepseek-chat' },
   { input: 'claude-3-5-sonnet', expected: 'deepseek-chat' },
-  { input: 'unknown-model', expected: 'deepseek-chat' }, // 默认值
+  { input: 'unknown-model', expected: 'deepseek-reasoner' }, // 默认值
 ];
 
 let passed = 0;

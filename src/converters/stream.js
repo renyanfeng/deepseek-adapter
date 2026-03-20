@@ -75,18 +75,23 @@ export class StreamConverter {
       return events;
     }
 
-    // 处理文本内容
-    if (delta?.content) {
-      // 首次文本，发送 content_block_start
+    // 处理文本内容 - DeepSeek Reasoner 使用 reasoning_content，普通模型使用 content
+    const textContent = delta.content || delta.reasoning_content || null;
+    if ('content' in delta || 'reasoning_content' in delta) {
+      // 首次遇到 content，发送 content_block_start
       if (this.contentIndex === 0) {
         events.push(this.generateContentBlockStart('text', 0));
+        this.contentIndex = 1; // 标记已开始
       }
 
-      events.push({
-        type: 'content_block_delta',
-        index: 0,
-        delta: { type: 'text_delta', text: delta.content }
-      });
+      // 只有当 content 不为空且不为 null 时才发送 delta
+      if (textContent && textContent !== '') {
+        events.push({
+          type: 'content_block_delta',
+          index: 0,
+          delta: { type: 'text_delta', text: textContent }
+        });
+      }
     }
 
     // 处理 tool calls

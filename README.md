@@ -11,7 +11,6 @@
 - ✅ 支持 Claude Code 完整功能
 - ✅ 支持流式响应
 - ✅ 支持 Tool Calling
-- ✅ 支持多模态（图片）
 
 ## 📦 安装
 
@@ -144,10 +143,17 @@ npx deepseek-adapter test
 
 ### Claude 模型映射
 
-**所有 Claude 模型统一映射到 DeepSeek Reasoner**
+根据 Claude 模型类型自动映射到最合适的 DeepSeek 模型：
+
+| Claude 模型 | DeepSeek 模型 | 说明 |
+|------------|---------------|------|
+| `claude-opus-*` | `deepseek-reasoner` | 推理增强模型 |
+| `claude-sonnet-*` | `deepseek-chat` | 主力对话模型 |
+| `claude-haiku-*` | `deepseek-chat` | 快速响应模型 |
+| 其他模型 | `deepseek-reasoner` | 默认推理模型 |
 
 - 无需担心模型名称不匹配
-- 自动使用 DeepSeek 最强的推理模型
+- 自动选择最合适的 DeepSeek 模型
 - 支持任意 Claude 模型名称（如 `claude-opus-4-6[1m]`、`claude-sonnet-4-6` 等）
 
 ## 🔧 高级用法
